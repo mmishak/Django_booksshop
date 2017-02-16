@@ -48,7 +48,7 @@ class Stock(models.Model):
 
 class Client(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField
+    email = models.EmailField(null=True)
     password = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
 
@@ -60,13 +60,13 @@ class Book(models.Model):
     title = models.CharField(max_length=100)
     publish_house = models.ForeignKey(PublishHouse, on_delete=models.CASCADE)
     description = models.CharField(max_length=400)
-    year_issue = models.PositiveIntegerField
-    rating = models.PositiveIntegerField
+    year_issue = models.PositiveIntegerField(null=True)
+    rating = models.PositiveIntegerField(null=True)
     price = models.FloatField(default=0.0)
 
-    authors = models.ManyToManyField(Author)
-    categories = models.ManyToManyField(Category)
-    rewards = models.ManyToManyField(Reward)
+    authors = models.ManyToManyField(Author, blank=True)
+    categories = models.ManyToManyField(Category, blank=True)
+    rewards = models.ManyToManyField(Reward, blank=True)
 
     def __str__(self):
         return self.title
@@ -75,31 +75,30 @@ class Book(models.Model):
 class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)  # надо бы перенети в OrderList
-    price = models.FloatField
-    date = models.DateField
-    recommendations = models.ManyToManyField(Book)
+    price = models.FloatField(default=0.0)
+    date = models.DateField(null=True)
+    recommendations = models.ManyToManyField(Book, blank=True)
 
     def __str__(self):
-        return 'Order by client: ' + Client.objects.get(id=self.client).name
+        return 'Order by client: ' + self.client.name
 
 
 class Review(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     text = models.CharField(max_length=400)
-    date = models.DateField
-    rating = models.PositiveIntegerField
+    date = models.DateField(null=True)
+    rating = models.PositiveIntegerField(null=True)
 
     def __str__(self):
-        return 'Review by client ' + Client.objects.get(id=self.client).name + ' to book ' + Book.objects.get(
-            id=self.client)
+        return 'Review by client ' + self.client.name + ' to book ' + self.book.title
 
 
 class OrderList(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    number = models.PositiveIntegerField
-    price = models.FloatField
+    number = models.PositiveIntegerField(default=0)
+    price = models.FloatField(default=0.0)
 
 
 class Supply(models.Model):
@@ -109,10 +108,10 @@ class Supply(models.Model):
 class SupplyComposition(models.Model):
     supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    number = models.PositiveIntegerField
+    number = models.PositiveIntegerField(default=0)
 
 
 class StockComposition(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    number = models.PositiveIntegerField
+    number = models.PositiveIntegerField(default=0)
