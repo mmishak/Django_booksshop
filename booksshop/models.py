@@ -74,7 +74,7 @@ class Book(models.Model):
 
 class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)  # надо бы перенети в OrderList
+     # надо бы перенети в OrderList
     price = models.FloatField(default=0.0)
     date = models.DateField(null=True)
     recommendations = models.ManyToManyField(Book, blank=True)
@@ -98,6 +98,7 @@ class OrderList(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(default=0)
+    stock = models.ForeignKey(Stock, null=True, on_delete=models.CASCADE)
     price = models.FloatField(default=0.0)
 
 
