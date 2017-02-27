@@ -74,7 +74,6 @@ class Book(models.Model):
 
 class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-     # надо бы перенети в OrderList
     price = models.FloatField(default=0.0)
     date = models.DateField(null=True)
     recommendations = models.ManyToManyField(Book, blank=True)
@@ -91,7 +90,7 @@ class Review(models.Model):
     rating = models.PositiveIntegerField(null=True)
 
     def __str__(self):
-        return 'Review by client ' + self.client.name + ' to book ' + self.book.title
+        return 'Review by client ' + self.client.name + ' to book "' + self.book.title + '"'
 
 
 class OrderList(models.Model):
