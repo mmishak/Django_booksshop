@@ -103,6 +103,7 @@ class OrderList(models.Model):
 
 class Supply(models.Model):
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, null=True)
 
 
 class SupplyComposition(models.Model):
