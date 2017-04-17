@@ -1,17 +1,16 @@
 from django.core.management import BaseCommand
 from booksshop.models import *
 from datetime import datetime
+from booksshop.management.commands.config_values import *
 
 import random
 import string
-
-RAND_STRING_LENGTH = 10
 
 
 class Command(BaseCommand):
     # добавляем аргументы нашей команде
     def add_arguments(self, parser):
-        parser.add_argument('table')
+        parser.add_argument('area')
         parser.add_argument('number')
 
     @staticmethod
@@ -39,7 +38,12 @@ class Command(BaseCommand):
         print('Authors creating....', end=' ')
         for i in range(0, numbers):
             author = Author(name=self.rand_string() + '_author')
-            author.save()
+            try:
+                author.save()
+            except:
+                print()
+                print("Error with " + i + ":" + author.name)
+                return
         print('OK')
 
     # генерация издательств
@@ -47,12 +51,17 @@ class Command(BaseCommand):
         print('Publish houses creating....', end=' ')
         for i in range(0, numbers):
             publish_house = PublishHouse(name=self.rand_string() + '_publish_house')
-            publish_house.save()
+            try:
+                publish_house.save()
+            except:
+                print()
+                print("Error with " + i + ":" + publish_house.name)
+                return
         print('OK')
 
     # генерация категорий
     def generate_category(self, numbers):
-        print('Authors creating....', end=' ')
+        print('Category creating....', end=' ')
         for i in range(0, numbers):
             category = Category(name=self.rand_string() + '_category')
             category.save()
@@ -119,26 +128,42 @@ class Command(BaseCommand):
 
     # генерация книг
     def generate_books(self, numbers):
+        if PublishHouse.objects.count() < Book.objects.count()+numbers:
+            self.generate_publish_houses(Book.objects.count()+numbers -
+                                         PublishHouse.objects.count())
+
+        if Author.objects.count() < (Book.objects.count()+numbers)*MAX_BOOK_AUTHOR:
+            self.generate_authors((Book.objects.count()+numbers)*MAX_BOOK_AUTHOR -
+                                  Author.objects.count())
+
+        if Category.objects.count() < (Book.objects.count()+numbers)*MAX_BOOK_CATEGORIES:
+            self.generate_category((Book.objects.count()+numbers)*MAX_BOOK_CATEGORIES -
+                                   Category.objects.count())
+
+        if Reward.objects.count() < (Book.objects.count()+numbers)*MAX_BOOK_REWARDS:
+            self.generate_rewards((Book.objects.count()+numbers)*MAX_BOOK_REWARDS -
+                                  Reward.objects.count())
+
         print('Books creating....', end=' ')
         for i in range(0, numbers):
             book = Book(
                 title=Command.rand_string() + '_title',
                 publish_house=random.choice(PublishHouse.objects.all()),
                 description=Command.rand_string() + '_description',
-                year_issue=random.randint(1800, 2017),
-                price=round(random.uniform(0, 5000), 2)
+                year_issue=random.randint(MIN_BOOK_YEAR, MAX_BOOK_YEAR),
+                price=round(random.uniform(MIN_BOOK_PRICE, MAX_BOOK_PRICE), 2)
             )
             book.save()
 
-            tmp_num = random.randint(0, 4)
+            tmp_num = random.randint(MIN_BOOK_AUTHOR, MAX_BOOK_AUTHOR)
             for j in range(0, tmp_num):
                 book.authors.add(random.choice(Author.objects.all()))
 
-            tmp_num = random.randint(1, 5)
+            tmp_num = random.randint(MIN_BOOK_CATEGORIES, MAX_BOOK_CATEGORIES)
             for j in range(0, tmp_num):
                 book.categories.add(random.choice(Category.objects.all()))
 
-            tmp_num = random.randint(0, 2)
+            tmp_num = random.randint(MIN_BOOK_REWARDS, MAX_BOOK_REWARDS)
             for j in range(0, tmp_num):
                 book.rewards.add(random.choice(Reward.objects.all()))
 
@@ -223,28 +248,27 @@ class Command(BaseCommand):
         self.generate_order_list(numbers)
 
     def handle(self, *args, **options):
-        table = options['table']
+        area_name = options['area']
         number = int(options['number'])
 
-        if table == '' or number <= 0:
+        if area_name == '' or number <= 0:
             print('Wrong input! Command format:')
-            print('generate_data <table_name> <number_of_data>')
+            print('generate_data <area_name> <number_of_data>')
             print('<table_name> - name of table for generating data or "all" for generate data fo all tables')
             return
 
-        if table == 'author':
-            self.generate_authors(number)
-        elif table == 'publishhouse':
-            self.generate_publish_houses(number)
-        elif table == 'category':
-            self.generate_category(number)
-        elif table == 'review':
-            self.generate_reviews(number)
-        elif table == 'client':
+        if area_name == 'books':
+            self.generate_books(number)
+        elif area_name == 'clients':
             self.generate_clients(number)
-        elif table == 'supply':
+            self.generate_reviews(number)
+            self.generate_orders(number)
+            self.generate_order_list(number)
+        elif area_name == 'stocks':
+            self.generate_stocks(number)
+            self.generate_providers(number)
             self.generate_supply(number)
-        elif table == 'all':
-            self.generate_all(number)
+            self.generate_supply_composition(number)
+            self.generate_stock_composition(number)
         else:
-            print('Table with name "' + table + '" not found')
+            print('Area with name "' + area_name + '" not found')
